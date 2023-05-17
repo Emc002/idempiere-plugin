@@ -23,7 +23,7 @@ public class CalloutsFactory implements IColumnCalloutFactory{
 		if(tableName.equalsIgnoreCase(MAsset.Table_Name) && columnName.equalsIgnoreCase(MAsset.COLUMNNAME_AD_Org_ID))
 			list.add(new Callouts());
 			
-		return list != null ? list.toArray(new IColumnCallout[1]) : new IColumnCallout[1];
+		return list != null ? list.toArray(new IColumnCallout[0]) : new IColumnCallout[0];
 	}
 
 }

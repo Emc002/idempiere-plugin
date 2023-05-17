@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Callouttest
-Bundle-SymbolicName: org.evenos.callouttest
+Bundle-Name: Rederp-plugin
+Bundle-SymbolicName: rederp-plugin
 Bundle-Version: 1.0.0.qualifier
 Require-Bundle: org.adempiere.base;bundle-version="10.0.0",
  org.adempiere.plugin.utils;bundle-version="10.0.0"
-Service-Component: MyCalloutFactory.xml
-Automatic-Module-Name: org.evenos.callouttest
+Service-Component: REDERPFactory.xml
+Automatic-Module-Name: rederp.plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-11

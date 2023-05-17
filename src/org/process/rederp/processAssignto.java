@@ -1,10 +1,10 @@
-package org.process.assigninto;
+package org.process.rederp;
 
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 
-public class AssignTo extends SvrProcess {
+public class processAssignto extends SvrProcess {
 	private Integer userId;
 	private Integer assetId;
 	
@@ -42,3 +42,4 @@ public class AssignTo extends SvrProcess {
 		return "Updated " + updatedRows + " rows";
 	}
 }
+

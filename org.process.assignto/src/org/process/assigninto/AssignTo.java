@@ -27,17 +27,15 @@ public class AssignTo extends SvrProcess {
 		String tableName = "a_asset";
 		String columnName = "ad_user_id";
 		
-		// Update the value of the column a_asset_id in the table a_asset
 		int updatedRows = DB.executeUpdate(
 			"UPDATE " + tableName +
 			" SET " + columnName + " = ?" +
-			" WHERE " + "a_asset_id" + " = " + assetId, // Update condition, adjust as needed
+			" WHERE " + "a_asset_id" + " = " + assetId,
 			userId,
 			get_TrxName()
 		);
 		
 		if (updatedRows == -1) {
-			// An error occurred while updating
 			throw new Exception("Failed to update the value of " + columnName + " in table " + tableName);
 		}
 		

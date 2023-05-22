@@ -92,7 +92,7 @@ public class processAssignto extends SvrProcess {
             redAssignmentLine.setRED_Assignment_ID(redAssignmentId);
             redAssignmentLine.saveEx();
             commitEx();
-            return "Updated 1 row. Note: " + string;
+            return "Updated and Create Success. Note: " + string;
          
 	    } catch (Exception e) {
 	    	rollback();

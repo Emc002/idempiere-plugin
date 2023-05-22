@@ -6,6 +6,7 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.model.rederp.X_RED_Assignment;
 import org.model.rederp.X_RED_Assignment_Line;
+
 public class processAssignto extends SvrProcess {
 	private Integer userId;
 	private Integer assetId;
@@ -21,7 +22,7 @@ public class processAssignto extends SvrProcess {
 				userId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("a_asset_id")) {
 				assetId = para.getParameterAsInt();
-			} else if (paraName.equalsIgnoreCase("c_location_id")) {
+			} else if (paraName.equalsIgnoreCase("c_locaton_id")) {
 				locationId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("c_activity_id")) {
 				activityId = para.getParameterAsInt();
@@ -31,9 +32,6 @@ public class processAssignto extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-	    String tableName = "a_asset";
-	    String columnName = "ad_user_id";
-
 	    final StringBuilder yesNo = new StringBuilder();
 	    final Object lock = new Object();
 	    processUI.ask("Yes or No?", new Callback<Boolean>() {
@@ -69,7 +67,6 @@ public class processAssignto extends SvrProcess {
 	            stringLock.wait();
 	        }
 	    }
-
 	    try {
 	        MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
 	        asset.setAD_User_ID(userId);
@@ -94,11 +91,13 @@ public class processAssignto extends SvrProcess {
             redAssignmentLine.setC_Location_ID(locationId);
             redAssignmentLine.setRED_Assignment_ID(redAssignmentId);
             redAssignmentLine.saveEx();
+            commitEx();
             return "Updated 1 row. Note: " + string;
          
 	    } catch (Exception e) {
+	    	rollback();
 	        e.printStackTrace();
-	        return "Failed to update the value of " + columnName + " in table " + tableName + ": " + e.getMessage();
+	        return "The Error is" + e + "Note: " + e.getMessage();
 	    }
 	}
 

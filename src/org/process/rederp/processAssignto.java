@@ -4,7 +4,8 @@ import org.adempiere.util.Callback;
 import org.compiere.model.MAsset;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
-
+import org.model.rederp.X_RED_Assignment;
+import org.model.rederp.X_RED_Assignment_Line;
 public class processAssignto extends SvrProcess {
 	private Integer userId;
 	private Integer assetId;
@@ -20,7 +21,7 @@ public class processAssignto extends SvrProcess {
 				userId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("a_asset_id")) {
 				assetId = para.getParameterAsInt();
-			} else if (paraName.equalsIgnoreCase("c_locaton_id")) {
+			} else if (paraName.equalsIgnoreCase("c_location_id")) {
 				locationId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("c_activity_id")) {
 				activityId = para.getParameterAsInt();
@@ -73,8 +74,28 @@ public class processAssignto extends SvrProcess {
 	        MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
 	        asset.setAD_User_ID(userId);
 	        asset.saveEx();
-
-	        return "Updated 1 row. Note: " + string;
+	        
+	        X_RED_Assignment redAssignment = new X_RED_Assignment(getCtx(), 0, get_TrxName());
+            redAssignment.setAD_Org_ID(0);
+            redAssignment.setDocStatus("DR");
+            redAssignment.setC_DocType_ID(200001);
+            redAssignment.setC_DocTypeTarget_ID(1000000);
+            redAssignment.setProcessed(false);
+            redAssignment.setProcessedOn(null);
+            redAssignment.setProcessing(false);
+            redAssignment.setIsApproved(false);
+            redAssignment.saveEx();
+            
+            int redAssignmentId = redAssignment.get_ID();
+            X_RED_Assignment_Line redAssignmentLine = new X_RED_Assignment_Line(getCtx(), 0, get_TrxName());
+            redAssignmentLine.setAD_Org_ID(0);
+            redAssignmentLine.setAD_User_ID(userId);
+            redAssignmentLine.setC_Activity_ID(activityId);
+            redAssignmentLine.setC_Location_ID(locationId);
+            redAssignmentLine.setRED_Assignment_ID(redAssignmentId);
+            redAssignmentLine.saveEx();
+            return "Updated 1 row. Note: " + string;
+         
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	        return "Failed to update the value of " + columnName + " in table " + tableName + ": " + e.getMessage();

@@ -22,7 +22,7 @@ public class processAssignto extends SvrProcess {
 				userId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("a_asset_id")) {
 				assetId = para.getParameterAsInt();
-			} else if (paraName.equalsIgnoreCase("c_locaton_id")) {
+			} else if (paraName.equalsIgnoreCase("c_location_id")) {
 				locationId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("c_activity_id")) {
 				activityId = para.getParameterAsInt();
@@ -97,7 +97,7 @@ public class processAssignto extends SvrProcess {
 	    } catch (Exception e) {
 	    	rollback();
 	        e.printStackTrace();
-	        return "The Error is" + e + "Note: " + e.getMessage();
+	        return "The Error is" + e;
 	    }
 	}
 

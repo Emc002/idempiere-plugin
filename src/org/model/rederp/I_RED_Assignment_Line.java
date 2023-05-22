@@ -21,18 +21,18 @@ import java.sql.Timestamp;
 import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
-/** Generated Interface for B_OfficeRoom
+/** Generated Interface for RED_Assignment_Line
  *  @author iDempiere (generated) 
  *  @version Release 10
  */
 @SuppressWarnings("all")
-public interface I_B_OfficeRoom 
+public interface I_RED_Assignment_Line 
 {
 
-    /** TableName=B_OfficeRoom */
-    public static final String Table_Name = "B_OfficeRoom";
+    /** TableName=RED_Assignment_Line */
+    public static final String Table_Name = "RED_Assignment_Line";
 
-    /** AD_Table_ID=1000004 */
+    /** AD_Table_ID=1000012 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -64,23 +64,50 @@ public interface I_B_OfficeRoom
 	  */
 	public int getAD_Org_ID();
 
-    /** Column name B_OfficeRoom_ID */
-    public static final String COLUMNNAME_B_OfficeRoom_ID = "B_OfficeRoom_ID";
+    /** Column name AD_User_ID */
+    public static final String COLUMNNAME_AD_User_ID = "AD_User_ID";
 
-	/** Set B_OfficeRoom	  */
-	public void setB_OfficeRoom_ID (int B_OfficeRoom_ID);
+	/** Set User/Contact.
+	  * User within the system - Internal or Business Partner Contact
+	  */
+	public void setAD_User_ID (int AD_User_ID);
 
-	/** Get B_OfficeRoom	  */
-	public int getB_OfficeRoom_ID();
+	/** Get User/Contact.
+	  * User within the system - Internal or Business Partner Contact
+	  */
+	public int getAD_User_ID();
 
-    /** Column name B_OfficeRoom_UU */
-    public static final String COLUMNNAME_B_OfficeRoom_UU = "B_OfficeRoom_UU";
+	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException;
 
-	/** Set B_OfficeRoom_UU	  */
-	public void setB_OfficeRoom_UU (String B_OfficeRoom_UU);
+    /** Column name C_Activity_ID */
+    public static final String COLUMNNAME_C_Activity_ID = "C_Activity_ID";
 
-	/** Get B_OfficeRoom_UU	  */
-	public String getB_OfficeRoom_UU();
+	/** Set Activity.
+	  * Business Activity
+	  */
+	public void setC_Activity_ID (int C_Activity_ID);
+
+	/** Get Activity.
+	  * Business Activity
+	  */
+	public int getC_Activity_ID();
+
+	public org.compiere.model.I_C_Activity getC_Activity() throws RuntimeException;
+
+    /** Column name C_Location_ID */
+    public static final String COLUMNNAME_C_Location_ID = "C_Location_ID";
+
+	/** Set Address.
+	  * Location or Address
+	  */
+	public void setC_Location_ID (int C_Location_ID);
+
+	/** Get Address.
+	  * Location or Address
+	  */
+	public int getC_Location_ID();
+
+	public I_C_Location getC_Location() throws RuntimeException;
 
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
@@ -137,27 +164,34 @@ public interface I_B_OfficeRoom
 	  */
 	public boolean isActive();
 
-    /** Column name Name */
-    public static final String COLUMNNAME_Name = "Name";
+    /** Column name RED_Assignment_ID */
+    public static final String COLUMNNAME_RED_Assignment_ID = "RED_Assignment_ID";
 
-	/** Set Name.
-	  * Alphanumeric identifier of the entity
-	  */
-	public void setName (String Name);
+	/** Set RED_Assignment	  */
+	public void setRED_Assignment_ID (int RED_Assignment_ID);
 
-	/** Get Name.
-	  * Alphanumeric identifier of the entity
-	  */
-	public String getName();
+	/** Get RED_Assignment	  */
+	public int getRED_Assignment_ID();
 
-    /** Column name T_Integer */
-    public static final String COLUMNNAME_T_Integer = "T_Integer";
+	public I_RED_Assignment getRED_Assignment() throws RuntimeException;
 
-	/** Set RoomNumber	  */
-	public void setT_Integer (int T_Integer);
+    /** Column name RED_Assignment_Line_ID */
+    public static final String COLUMNNAME_RED_Assignment_Line_ID = "RED_Assignment_Line_ID";
 
-	/** Get RoomNumber	  */
-	public int getT_Integer();
+	/** Set RED_Assignment_Line	  */
+	public void setRED_Assignment_Line_ID (int RED_Assignment_Line_ID);
+
+	/** Get RED_Assignment_Line	  */
+	public int getRED_Assignment_Line_ID();
+
+    /** Column name RED_Assignment_Line_UU */
+    public static final String COLUMNNAME_RED_Assignment_Line_UU = "RED_Assignment_Line_UU";
+
+	/** Set RED_Assignment_Line_UU	  */
+	public void setRED_Assignment_Line_UU (String RED_Assignment_Line_UU);
+
+	/** Get RED_Assignment_Line_UU	  */
+	public String getRED_Assignment_Line_UU();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
@@ -174,26 +208,4 @@ public interface I_B_OfficeRoom
 	  * User who updated this records
 	  */
 	public int getUpdatedBy();
-
-    /** Column name Value */
-    public static final String COLUMNNAME_Value = "Value";
-
-	/** Set Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value);
-
-	/** Get Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public String getValue();
-
-    /** Column name V_String */
-    public static final String COLUMNNAME_V_String = "V_String";
-
-	/** Set FloorNumber	  */
-	public void setV_String (String V_String);
-
-	/** Get FloorNumber	  */
-	public String getV_String();
 }

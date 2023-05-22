@@ -5,7 +5,6 @@ import java.util.List;
 import org.adempiere.base.IColumnCallout;
 import org.adempiere.base.IColumnCalloutFactory;
 import org.compiere.model.MAsset;
-import org.model.rederp.MOfficeRoom;
 
 
 public class CalloutsFactory implements IColumnCalloutFactory{
@@ -26,8 +25,8 @@ public class CalloutsFactory implements IColumnCalloutFactory{
 			list.add(new Callouts());
 		
 		//Model Office Room (Custom Model)
-		if(tableName.equalsIgnoreCase(MOfficeRoom.Table_Name) && columnName.equalsIgnoreCase(MOfficeRoom.COLUMNNAME_T_Integer))
-			list.add(new CalloutMOfficeRoom());
+//		if(tableName.equalsIgnoreCase(MOfficeRoom.Table_Name) && columnName.equalsIgnoreCase(MOfficeRoom.COLUMNNAME_T_Integer))
+//			list.add(new CalloutMOfficeRoom());
 			
 		return list != null ? list.toArray(new IColumnCallout[0]) : new IColumnCallout[0];
 	}

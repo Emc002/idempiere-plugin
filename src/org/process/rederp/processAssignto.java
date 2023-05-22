@@ -1,9 +1,9 @@
 package org.process.rederp;
 
 import org.adempiere.util.Callback;
+import org.compiere.model.MAsset;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
-import org.compiere.util.DB;
 
 public class processAssignto extends SvrProcess {
 	private Integer userId;
@@ -25,68 +25,62 @@ public class processAssignto extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		String tableName = "a_asset";
-		String columnName = "ad_user_id";
-		
-		final StringBuilder yesNo = new StringBuilder();
-		final Object lock = new Object();
-		processUI.ask("Yes or No?", new Callback<Boolean>() {
-			
-			
+	    String tableName = "a_asset";
+	    String columnName = "ad_user_id";
 
-			@Override
-			public void onCallback(Boolean result) {
-				// TODO Auto-generated method stub
-				yesNo.append(result);
-				synchronized (lock) {
-                    lock.notify();
-                }
-				
-			}
-		});
-		
-        synchronized (lock) {
-            while (yesNo.length() == 0) {
-                lock.wait();
-            }
-        }
-		
-		final StringBuilder string = new StringBuilder();
-		final Object stringLock = new Object();
-		
-		processUI.askForInput("Please Enter a String", new Callback<String>() {
+	    final StringBuilder yesNo = new StringBuilder();
+	    final Object lock = new Object();
+	    processUI.ask("Yes or No?", new Callback<Boolean>() {
+	        @Override
+	        public void onCallback(Boolean result) {
+	            yesNo.append(result);
+	            synchronized (lock) {
+	                lock.notify();
+	            }
+	        }
+	    });
 
-			@Override
-			public void onCallback(String result) {
-				// TODO Auto-generated method stub
-				string.append(result);
-				synchronized (stringLock) {
-					stringLock.notify();
-                }
-			}
-		});
-		
-        synchronized (stringLock) {
-            while (string.length() == 0) {
-                stringLock.wait();
-            }
-        }
-        
-		int updatedRows = DB.executeUpdate(
-				"UPDATE " + tableName +
-				" SET " + columnName + " = ?" +
-				" WHERE " + "a_asset_id" + " = " + assetId,
-				userId,
-				get_TrxName()
-			);
-			
-			if (updatedRows == -1) {
-				
-				throw new Exception("Failed to update the value of " + columnName + " in table " + tableName);
-			}
-		
-			
-        return "Updated " + updatedRows + " rows. Note:" + string;
+	    synchronized (lock) {
+	        while (yesNo.length() == 0) {
+	            lock.wait();
+	        }
+	    }
+
+	    final StringBuilder string = new StringBuilder();
+	    final Object stringLock = new Object();
+	    processUI.askForInput("Please Enter a String", new Callback<String>() {
+	        @Override
+	        public void onCallback(String result) {
+	            string.append(result);
+	            synchronized (stringLock) {
+	                stringLock.notify();
+	            }
+	        }
+	    });
+
+	    synchronized (stringLock) {
+	        while (string.length() == 0) {
+	            stringLock.wait();
+	        }
+	    }
+
+	    try {
+	        // Load the asset record
+	        MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
+
+	        // Update the column value
+	        asset.setAD_User_ID(userId);
+
+	        // Save the changes
+	        asset.saveEx();
+
+	        return "Updated 1 row. Note: " + string;
+	    } catch (Exception e) {
+	        // Handle the exception
+	        e.printStackTrace();
+	        return "Failed to update the value of " + columnName + " in table " + tableName + ": " + e.getMessage();
+	    }
 	}
+
 }
 

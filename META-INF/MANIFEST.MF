@@ -8,3 +8,4 @@ Require-Bundle: org.adempiere.base;bundle-version="10.0.0",
 Service-Component: OSGI-INF/CalloutFactory.xml,OSGI-INF/AssignToFactory.xml
 Automatic-Module-Name: rederp.plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-11
+Import-Package: org.compiere.model

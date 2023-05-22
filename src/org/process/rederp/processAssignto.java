@@ -8,7 +8,8 @@ import org.compiere.process.SvrProcess;
 public class processAssignto extends SvrProcess {
 	private Integer userId;
 	private Integer assetId;
-	
+	private Integer locationId;
+	private Integer activityId;
 	@Override
 	protected void prepare() {
 		ProcessInfoParameter[] paras = getParameter();
@@ -19,6 +20,10 @@ public class processAssignto extends SvrProcess {
 				userId = para.getParameterAsInt();
 			} else if(paraName.equalsIgnoreCase("a_asset_id")) {
 				assetId = para.getParameterAsInt();
+			} else if (paraName.equalsIgnoreCase("c_locaton_id")) {
+				locationId = para.getParameterAsInt();
+			} else if(paraName.equalsIgnoreCase("c_activity_id")) {
+				activityId = para.getParameterAsInt();
 			}
 		}
 	}
@@ -65,18 +70,12 @@ public class processAssignto extends SvrProcess {
 	    }
 
 	    try {
-	        // Load the asset record
 	        MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
-
-	        // Update the column value
 	        asset.setAD_User_ID(userId);
-
-	        // Save the changes
 	        asset.saveEx();
 
 	        return "Updated 1 row. Note: " + string;
 	    } catch (Exception e) {
-	        // Handle the exception
 	        e.printStackTrace();
 	        return "Failed to update the value of " + columnName + " in table " + tableName + ": " + e.getMessage();
 	    }

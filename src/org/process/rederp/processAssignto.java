@@ -77,9 +77,16 @@ public class processAssignto extends SvrProcess {
       }
     }
     try {
+    	
       MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
-      asset.setAD_User_ID(userId);
-      asset.saveEx();
+      int isAssign = asset.getAD_User_ID();
+      System.out.println(isAssign);
+      if (isAssign == 0) {
+    	    asset.setAD_User_ID(userId);
+    	    asset.saveEx();
+    	} else {
+    		throw new Exception("Cannot Assign user to this Asset. The Asset Already Assign into ( the name will be here in a moment ): .");
+    	}
 
       X_RED_Assignment redAssignment = new X_RED_Assignment(
         getCtx(),
@@ -113,7 +120,7 @@ public class processAssignto extends SvrProcess {
     } catch (Exception e) {
       rollback();
       e.printStackTrace();
-      return "The Error is" + e;
+      return "The Error is" + e.getMessage();
     }
   }
 }

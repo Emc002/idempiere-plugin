@@ -33,7 +33,7 @@ public class X_RED_Assignment extends PO implements I_RED_Assignment, I_Persiste
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20230522L;
+	private static final long serialVersionUID = 20230523L;
 
     /** Standard Constructor */
     public X_RED_Assignment (Properties ctx, int RED_Assignment_ID, String trxName)

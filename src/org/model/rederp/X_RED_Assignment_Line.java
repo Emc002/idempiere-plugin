@@ -31,7 +31,7 @@ public class X_RED_Assignment_Line extends PO implements I_RED_Assignment_Line, 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20230522L;
+	private static final long serialVersionUID = 20230523L;
 
     /** Standard Constructor */
     public X_RED_Assignment_Line (Properties ctx, int RED_Assignment_Line_ID, String trxName)
@@ -82,6 +82,34 @@ public class X_RED_Assignment_Line extends PO implements I_RED_Assignment_Line, 
         .append(get_ID()).append("]");
       return sb.toString();
     }
+
+	public org.compiere.model.I_A_Asset getA_Asset() throws RuntimeException
+	{
+		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_ID)
+			.getPO(getA_Asset_ID(), get_TrxName());
+	}
+
+	/** Set Asset.
+		@param A_Asset_ID Asset used internally or by customers
+	*/
+	public void setA_Asset_ID (int A_Asset_ID)
+	{
+		if (A_Asset_ID < 1)
+			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, null);
+		else
+			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, Integer.valueOf(A_Asset_ID));
+	}
+
+	/** Get Asset.
+		@return Asset used internally or by customers
+	  */
+	public int getA_Asset_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
 
 	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException
 	{

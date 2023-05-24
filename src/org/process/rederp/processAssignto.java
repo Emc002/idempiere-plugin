@@ -87,7 +87,7 @@ public class processAssignto extends SvrProcess {
     	} else {
     		throw new Exception("Cannot Assign user to this Asset. The Asset Already Assign into ( the name will be here in a moment ): .");
     	}
-
+      int assetId = asset.get_ID();
       X_RED_Assignment redAssignment = new X_RED_Assignment(
         getCtx(),
         0,
@@ -111,6 +111,7 @@ public class processAssignto extends SvrProcess {
       );
       redAssignmentLine.setAD_Org_ID(0);
       redAssignmentLine.setAD_User_ID(userId);
+      redAssignmentLine.setA_Asset_ID(assetId);
       redAssignmentLine.setC_Activity_ID(activityId);
       redAssignmentLine.setC_Location_ID(locationId);
       redAssignmentLine.setRED_Assignment_ID(redAssignmentId);

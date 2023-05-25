@@ -6,30 +6,18 @@ import java.util.Properties;
 
 import org.compiere.process.DocAction;
 
-public class MAssignmentLine extends X_RED_Assignment_Line implements DocAction {
+public class MAssignment extends X_RED_Assignment implements DocAction {
 
-	private static final long serialVersionUID = -7899079406308321250L;
+	private static final long serialVersionUID = -3426495909172765513L;
 
-	public MAssignmentLine(Properties ctx, int RED_Assignment_Line_ID, String trxName, String[] virtualColumns) {
-		super(ctx, RED_Assignment_Line_ID, trxName, virtualColumns);
+	public MAssignment(Properties ctx, int RED_Assignment_ID, String trxName, String[] virtualColumns) {
+		super(ctx, RED_Assignment_ID, trxName, virtualColumns);
 		// TODO Auto-generated constructor stub
 	}
-
-	public MAssignmentLine(Properties ctx, int RED_Assignment_Line_ID, String trxName) {
-		super(ctx, RED_Assignment_Line_ID, trxName);
+	
+	public MAssignment(Properties ctx, int RED_Assignment_ID, String trxName) {
+		super(ctx, RED_Assignment_ID, trxName);
 		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void setDocStatus(String newStatus) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getDocStatus() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -71,8 +59,6 @@ public class MAssignmentLine extends X_RED_Assignment_Line implements DocAction 
 	@Override
 	public String completeIt() {
 		// TODO Auto-generated method stub
-		setDocStatus(STATUS_Completed);
-		
 		return null;
 	}
 
@@ -113,12 +99,6 @@ public class MAssignmentLine extends X_RED_Assignment_Line implements DocAction 
 	}
 
 	@Override
-	public String getDocumentNo() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public String getDocumentInfo() {
 		// TODO Auto-generated method stub
 		return null;
@@ -153,12 +133,5 @@ public class MAssignmentLine extends X_RED_Assignment_Line implements DocAction 
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public String getDocAction() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 
 }

@@ -6,7 +6,7 @@ import org.compiere.model.GridField;
 import org.compiere.model.GridTab;
 import org.compiere.model.MAsset;
 
-public class Callouts implements IColumnCallout {	
+public class Callouts implements IColumnCallout {
 	@Override
 	public String start(Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value, Object oldValue) {
 		mTab.setValue(MAsset.COLUMNNAME_Description, value.toString() + " is the best product in here");

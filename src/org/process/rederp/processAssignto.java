@@ -4,8 +4,9 @@ import org.adempiere.util.Callback;
 import org.compiere.model.MAsset;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
+import org.compiere.util.Msg;
 import org.model.rederp.X_RED_Assignment;
-import org.model.rederp.X_RED_Assignment_Line;
+import org.model.rederp.MAssignmentLine;
 
 public class processAssignto extends SvrProcess {
   private Integer userId;
@@ -18,7 +19,6 @@ public class processAssignto extends SvrProcess {
     ProcessInfoParameter[] paras = getParameter();
     for (ProcessInfoParameter para : paras) {
       String paraName = para.getParameterName();
-
       if (paraName.equalsIgnoreCase("ad_user_id")) {
         userId = para.getParameterAsInt();
       } else if (paraName.equalsIgnoreCase("a_asset_id")) {
@@ -85,6 +85,7 @@ public class processAssignto extends SvrProcess {
     	    asset.setAD_User_ID(userId);
     	    asset.saveEx();
     	} else {
+    		addLog(0, null, null, Msg.getMsg(getCtx(), "TES ADDLOG Asset", new Object[] {asset.getValue(), asset.getA_Asset_ID()}));
     		throw new Exception("Cannot Assign user to this Asset. The Asset Already Assign into ( the name will be here in a moment ): .");
     	}
       int assetId = asset.get_ID();
@@ -104,7 +105,7 @@ public class processAssignto extends SvrProcess {
       redAssignment.saveEx();
 
       int redAssignmentId = redAssignment.get_ID();
-      X_RED_Assignment_Line redAssignmentLine = new X_RED_Assignment_Line(
+      MAssignmentLine redAssignmentLine = new MAssignmentLine(
         getCtx(),
         0,
         get_TrxName()
@@ -116,7 +117,13 @@ public class processAssignto extends SvrProcess {
       redAssignmentLine.setC_Location_ID(locationId);
       redAssignmentLine.setRED_Assignment_ID(redAssignmentId);
       redAssignmentLine.saveEx();
+      
+//      MAssignmentLine massignmentline = new MAssignmentLine(getCtx(), redAssignmentId, MSG_InvalidArguments);
+//      massignmentline.completeIt();
+      
       commitEx();
+      
+      addLog("Updated and Create Success");
       return "Updated and Create Success. Note: " + string;
     } catch (Exception e) {
       rollback();

@@ -10,4 +10,6 @@ Service-Component: OSGI-INF/CalloutFactory.xml,OSGI-INF/AssignToFactory.xml,
  OSGI-INF/RedHandlerFactory.xml
 Automatic-Module-Name: rederp.plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Import-Package: org.compiere.model
+Import-Package: org.apache.poi.ss.formula.functions;version="4.1.2",
+ org.compiere.model,
+ org.zkoss.poi.ss.formula.functions

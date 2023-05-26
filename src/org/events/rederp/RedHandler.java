@@ -41,8 +41,6 @@ public class RedHandler extends AbstractEventHandler {
         asignmentlineID = po.get_ID();
       }
     } else if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) || event.getTopic().equals(IEventTopics.PO_BEFORE_NEW) ) {
-    	System.out.println("Event: " + event.getProperty("tableName"));
-      if (po != null) {
       if(po.get_TableName().equals(X_RED_Assignment_Line.Table_Name)) {
       asignmentlineID = po.get_ID();
       Integer assetID = (Integer) po.get_Value("A_Asset_ID");
@@ -78,7 +76,6 @@ public class RedHandler extends AbstractEventHandler {
       }
       
       }
-    }
       
     }
   }

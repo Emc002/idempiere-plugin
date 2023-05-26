@@ -59,6 +59,7 @@ public class MAssignment extends X_RED_Assignment implements DocAction {
 	@Override
 	public String completeIt() {
 		// TODO Auto-generated method stub
+		setDocStatus(STATUS_Completed);
 		return null;
 	}
 

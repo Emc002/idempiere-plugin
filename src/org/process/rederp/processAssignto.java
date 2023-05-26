@@ -1,5 +1,6 @@
 package org.process.rederp;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.compiere.model.MAsset;
 import org.compiere.process.ProcessInfoParameter;
@@ -36,7 +37,7 @@ public class processAssignto extends SvrProcess {
     final StringBuilder yesNo = new StringBuilder();
     final Object lock = new Object();
     processUI.ask(
-      "Yes or No?",
+      "Are you sure?",
       new Callback<Boolean>() {
 
         @Override
@@ -55,27 +56,6 @@ public class processAssignto extends SvrProcess {
       }
     }
 
-    final StringBuilder string = new StringBuilder();
-    final Object stringLock = new Object();
-    processUI.askForInput(
-      "Please Enter a String",
-      new Callback<String>() {
-
-        @Override
-        public void onCallback(String result) {
-          string.append(result);
-          synchronized (stringLock) {
-            stringLock.notify();
-          }
-        }
-      }
-    );
-
-    synchronized (stringLock) {
-      while (string.length() == 0) {
-        stringLock.wait();
-      }
-    }
     try {
     	
       MAsset asset = new MAsset(getCtx(), assetId, get_TrxName());
@@ -85,8 +65,7 @@ public class processAssignto extends SvrProcess {
     	    asset.setAD_User_ID(userId);
     	    asset.saveEx();
     	} else {
-    		addLog(0, null, null, Msg.getMsg(getCtx(), "TES ADDLOG Asset", new Object[] {asset.getValue(), asset.getA_Asset_ID()}));
-    		throw new Exception("Cannot Assign user to this Asset. The Asset Already Assign into ( the name will be here in a moment ): .");
+    		throw new AdempiereException("Cannot Assign user to this Asset. The Asset Already Assign into another user .");
     	}
       int assetId = asset.get_ID();
       X_RED_Assignment redAssignment = new X_RED_Assignment(
@@ -117,18 +96,12 @@ public class processAssignto extends SvrProcess {
       redAssignmentLine.setC_Location_ID(locationId);
       redAssignmentLine.setRED_Assignment_ID(redAssignmentId);
       redAssignmentLine.saveEx();
-      
-//      MAssignmentLine massignmentline = new MAssignmentLine(getCtx(), redAssignmentId, MSG_InvalidArguments);
-//      massignmentline.completeIt();
-      
       commitEx();
-      
-      addLog("Updated and Create Success");
-      return "Updated and Create Success. Note: " + string;
+      return "Updated and Create Success. Note: ";
     } catch (Exception e) {
       rollback();
       e.printStackTrace();
-      return "The Error is" + e.getMessage();
+      throw new AdempiereException(e.getMessage());
     }
   }
 }

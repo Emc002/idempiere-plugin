@@ -9,7 +9,6 @@ import org.compiere.util.Env;
 import org.model.rederp.X_RED_Assignment;
 import org.model.rederp.X_RED_Assignment_Line;
 import org.osgi.service.event.Event;
-import org.zkoss.poi.ss.formula.functions.T;
 
 
 
@@ -18,10 +17,11 @@ public class RedHandler extends AbstractEventHandler {
 
   @Override
   protected void doHandleEvent(Event event) {
+	  PO po = getPO(event);
     if (
       event.getTopic().equals(IEventTopics.DOC_AFTER_COMPLETE)
     ) {
-      PO po = getPO(event);
+      
       if (po.get_TableName().equals(X_RED_Assignment.Table_Name)) {
         if (asignmentlineID != 0) {
           X_RED_Assignment_Line assignmentLine = new X_RED_Assignment_Line(
@@ -42,7 +42,6 @@ public class RedHandler extends AbstractEventHandler {
       }
     } else if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) || event.getTopic().equals(IEventTopics.PO_BEFORE_NEW) ) {
     	System.out.println("Event: " + event.getProperty("tableName"));
-    	PO po = getPO(event);
       if (po != null) {
       if(po.get_TableName().equals(X_RED_Assignment_Line.Table_Name)) {
       asignmentlineID = po.get_ID();
@@ -52,29 +51,30 @@ public class RedHandler extends AbstractEventHandler {
       Integer locationID = (Integer) po.get_Value("C_Location_ID");
       
       StringBuilder errorMessage = new StringBuilder("Please input the data in Column: ");
+      StringBuilder err = new StringBuilder();
       int num = 0;
       if (assetID == null) {
     	  num++;
-          errorMessage.append(num + ". Asset  ");
+    	  err.append(num + ". Asset  ");
       }
 
       if (userID == null) {
     	  num++;
-          errorMessage.append(num + ". User  ");
+    	  err.append(num + ". User  ");
       }
 
       if (activityID == null) {
     	  num++;
-          errorMessage.append(num + ". Activity  ");
+    	  err.append(num + ". Activity  ");
       }
 
       if (locationID == null) {
     	  num++;
-          errorMessage.append(num + ". Address  ");
+    	  err.append(num + ". Address  ");
       }
 
-      if (errorMessage.length() > 0) {
-          throw new AdempiereException(errorMessage.toString());
+      if (err.length() > 0) {
+          throw new AdempiereException(errorMessage.toString() + err.toString());
       }
       
       }

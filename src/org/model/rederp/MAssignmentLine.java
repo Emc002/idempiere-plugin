@@ -1,10 +1,8 @@
 package org.model.rederp;
 
-import java.io.File;
-import java.math.BigDecimal;
+
 import java.util.Properties;
 
-import org.compiere.process.DocAction;
 
 public class MAssignmentLine extends X_RED_Assignment_Line {
 

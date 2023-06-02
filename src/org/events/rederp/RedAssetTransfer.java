@@ -214,24 +214,11 @@ public class RedAssetTransfer extends AbstractEventHandler {
               .first();
 
           int depreWorkFileIDOne = assetBlncQue.get_ID();
-//          int aBalanceOrgIDOne = assetBlncQue.getAD_Org_ID();
           MDepreciationWorkfile assetBalanceUpdate = new MDepreciationWorkfile(Env.getCtx(), depreWorkFileIDOne, m_trx.getTrxName());
           Integer testing = assetBalanceUpdate.get_ID();
           System.out.println(testing + "testing");
-     if (row != null && metaData != null) {
-         int columnCount = row.length;
-         for (int i = 1; i <= columnCount; i++) {
-             String columnName = metaData.getColumnName(i);
-             Object columnValue = row[i - 1];
-             if (i != 45 && i != 46 && i != 1 && i != 6) {
-            	    assetBalanceUpdate.set_ValueOfColumn(columnName, columnValue);
-            	}
-             
-         }
-         System.out.println(assetBalanceUpdate);
-     }
-//     assetBalanceUpdate.setA_Depreciation_Workfile_ID(depreWorkFileIDOne);
-//     assetBalanceUpdate.setAD_Org_ID(aBalanceOrgIDOne);
+          PO.copyValues(assetBlncQue, assetBalanceUpdate);
+          System.out.println(assetBalanceUpdate);
      assetBalanceUpdate.saveEx();
      m_trx.commit();
         } catch (Exception e) {

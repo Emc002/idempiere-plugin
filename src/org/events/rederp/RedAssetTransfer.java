@@ -7,7 +7,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.UUID;
 import org.adempiere.base.event.AbstractEventHandler;
 import org.adempiere.base.event.IEventTopics;
 import org.adempiere.exceptions.AdempiereException;
@@ -15,13 +14,11 @@ import org.compiere.model.MAsset;
 import org.compiere.model.MAssetAddition;
 import org.compiere.model.MAssetDisposed;
 import org.compiere.model.MAssetGroup;
+import org.compiere.model.MDepreciationExp;
 import org.compiere.model.MDepreciationWorkfile;
-//import org.compiere.model.MDepreciationWorkfile;
 import org.compiere.model.PO;
-import org.compiere.model.PO_Record;
 import org.compiere.model.Query;
 import org.compiere.model.X_A_Asset_Disposed;
-import org.compiere.model.X_A_Depreciation_Workfile;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
@@ -29,7 +26,6 @@ import org.model.rederp.X_RED_Asset_Transfer;
 import org.osgi.service.event.Event;
 
 public class RedAssetTransfer extends AbstractEventHandler {
-//  private Trx m_trx;
 
   @Override
   protected void doHandleEvent(Event event) {
@@ -37,36 +33,13 @@ public class RedAssetTransfer extends AbstractEventHandler {
     Trx m_trx = Trx.get(Trx.createTrxName("TRF"), true);
     if (event.getTopic().equals(IEventTopics.DOC_BEFORE_COMPLETE)) {
       if (po.get_TableName().equals(X_RED_Asset_Transfer.Table_Name)) {
-        StringBuilder errorMessage = new StringBuilder(
-          "Please input the data in Column: "
-        );
-        StringBuilder err = new StringBuilder();
         try {
-          Timestamp now = new Timestamp(System.currentTimeMillis());
           Integer orgID = (Integer) po.get_Value("AD_Org_ID");
           Integer assetID = (Integer) po.get_Value("A_Asset_ID");
           Integer docTypeID = (Integer) po.get_Value("C_DocType_ID");
-          int num = 0;
-          if (orgID == null) {
-            num++;
-            err.append(num + ". Transfer to Organization  ");
-          }
-
-          if (assetID == null) {
-            num++;
-            err.append(num + ". Asset  ");
-          }
-          if (docTypeID == null) {
-            num++;
-            err.append(num + ". Document Type  ");
-          }
-          if (err.length() > 0) {
-            throw new AdempiereException(
-              errorMessage.toString() + err.toString()
-            );
-          }
-
-//          m_trx.start();
+          validateAssetTransfer(orgID, assetID, docTypeID);
+          Timestamp now = new Timestamp(System.currentTimeMillis());
+          //          m_trx.start();
 
           MAsset originalAsset = new MAsset(
             Env.getCtx(),
@@ -113,14 +86,15 @@ public class RedAssetTransfer extends AbstractEventHandler {
           newAsset.saveEx();
           int newAssetId = newAsset.get_ID();
           int originalAssetID = originalAsset.get_ID();
-          String sql = "SELECT *,\n"
-                  + "  (CASE\n"
-                  + "    WHEN UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1 > 0\n"
-                  + "    THEN (A_Asset_Cost - A_Accumulated_Depr_F) / (UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1)\n"
-                  + "    ELSE 0\n"
-                  + "  END) AS a_expense_sl_f\n"
-                  + "FROM A_Depreciation_Workfile\n"
-                  + "WHERE A_Asset_ID = ?";
+          String sql =
+            "SELECT *,\n" +
+            "  (CASE\n" +
+            "    WHEN UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1 > 0\n" +
+            "    THEN (A_Asset_Cost - A_Accumulated_Depr_F) / (UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1)\n" +
+            "    ELSE 0\n" +
+            "  END) AS a_expense_sl_f\n" +
+            "FROM A_Depreciation_Workfile\n" +
+            "WHERE A_Asset_ID = ?";
           PreparedStatement pstmt = null;
           ResultSet rs = null;
           Object[] row = null;
@@ -131,18 +105,24 @@ public class RedAssetTransfer extends AbstractEventHandler {
             rs = pstmt.executeQuery();
 
             if (rs.next()) {
-            	 metaData = rs.getMetaData();
-                 int columnCount = metaData.getColumnCount();
-                 row = new Object[columnCount];
-                 for (int i = 1; i <= columnCount; i++) {
-                     row[i - 1] = rs.getObject(i);
-                 }
+              metaData = rs.getMetaData();
+              int columnCount = metaData.getColumnCount();
+              row = new Object[columnCount];
+              for (int i = 1; i <= columnCount; i++) {
+                row[i - 1] = rs.getObject(i);
+              }
             }
           } catch (SQLException e) {
             e.printStackTrace();
           } finally {
             DB.close(rs, pstmt);
           }
+          int depreWorkFileIDOld = Integer.parseInt(row[0].toString());
+          MDepreciationWorkfile assetBalanceOld = new MDepreciationWorkfile(
+            Env.getCtx(),
+            depreWorkFileIDOld,
+            m_trx.getTrxName()
+          );
           BigDecimal assetCostRemain = new BigDecimal(row[37].toString());
           BigDecimal accumulatedDepr = new BigDecimal(row[29].toString());
           BigDecimal expenseSL = new BigDecimal(row[45].toString());
@@ -168,20 +148,14 @@ public class RedAssetTransfer extends AbstractEventHandler {
           String statusAssetDispo = assetDisposed.completeIt();
           assetDisposed.setDocStatus(statusAssetDispo);
           assetDisposed.saveEx();
-//          m_trx.commit();
-//          m_trx = Trx.get(Trx.createTrxName("TRF-1"), true);
-//          m_trx.start();
-       BigDecimal assetCost = new BigDecimal(row[4].toString());
-       BigDecimal currentQtyDecimal = new BigDecimal(row[17].toString());
-       System.out.println(row[16]);
-       BigDecimal salvageValueDecimal;
-       if (row[16].toString().equals("0")) {
-           salvageValueDecimal = BigDecimal.ZERO;
-           System.out.println(salvageValueDecimal);
-           System.out.println(salvageValueDecimal);
-       } else {
-           salvageValueDecimal = new BigDecimal(row[16].toString());
-       }
+          BigDecimal assetCost = new BigDecimal(row[4].toString());
+          BigDecimal currentQtyDecimal = new BigDecimal(row[17].toString());
+          BigDecimal salvageValueDecimal;
+          if (row[16].toString().equals("0")) {
+            salvageValueDecimal = BigDecimal.ZERO;
+          } else {
+            salvageValueDecimal = new BigDecimal(row[16].toString());
+          }
 
           MAssetAddition assetAddition = new MAssetAddition(
             Env.getCtx(),
@@ -207,27 +181,59 @@ public class RedAssetTransfer extends AbstractEventHandler {
           String completeAdd = assetAddition.completeIt();
           assetAddition.setDocStatus(completeAdd);
           assetAddition.saveEx();
-//          m_trx.commit();  
           int A_Asset_ID = newAssetId;
-          MDepreciationWorkfile assetBlncQue = new Query(Env.getCtx(), MDepreciationWorkfile.Table_Name, "a_asset_id = ?", m_trx.getTrxName())
-              .setParameters(A_Asset_ID)
+          MDepreciationWorkfile assetBlncQue = new Query(
+            Env.getCtx(),
+            MDepreciationWorkfile.Table_Name,
+            "a_asset_id = ?",
+            m_trx.getTrxName()
+          )
+            .setParameters(A_Asset_ID)
+            .first();
+          int currentPeriode = assetBalanceOld.getA_Current_Period();
+          for (int period = 1; period <= currentPeriode; period++) {
+            MDepreciationExp assetExpense = new Query(
+              Env.getCtx(),
+              MDepreciationExp.Table_Name,
+              "a_asset_id = ? AND a_period = ?",
+              m_trx.getTrxName()
+            )
+              .setParameters(A_Asset_ID, period)
               .first();
 
+            if (assetExpense == null) {
+              // Handle the case where no asset expense record exists for the current period
+              continue;
+            }
+
+            BigDecimal assetCostExp = assetExpense.getA_Asset_Cost();
+            BigDecimal accuDepr = assetExpense.getA_Accumulated_Depr();
+            BigDecimal result = assetCostExp.subtract(accuDepr);
+
+            assetExpense.setProcessed(true);
+            assetExpense.setA_Asset_Remaining(result);
+            assetExpense.setA_Asset_Remaining_F(result);
+            assetExpense.saveEx();
+          }
+
           int depreWorkFileIDOne = assetBlncQue.get_ID();
-          MDepreciationWorkfile assetBalanceUpdate = new MDepreciationWorkfile(Env.getCtx(), depreWorkFileIDOne, m_trx.getTrxName());
-          Integer testing = assetBalanceUpdate.get_ID();
-          System.out.println(testing + "testing");
-          PO.copyValues(assetBlncQue, assetBalanceUpdate);
-          System.out.println(assetBalanceUpdate);
-     assetBalanceUpdate.saveEx();
-     m_trx.commit();
+          MDepreciationWorkfile assetBalanceUpdate = new MDepreciationWorkfile(
+            Env.getCtx(),
+            depreWorkFileIDOne,
+            m_trx.getTrxName()
+          );
+          int assetIDNew = assetBalanceUpdate.getA_Asset_ID();
+          PO.copyValues(assetBalanceOld, assetBalanceUpdate);
+          assetBalanceUpdate.setA_Asset_ID(assetIDNew);
+          assetBalanceUpdate.saveEx();
+          m_trx.commit();
         } catch (Exception e) {
           m_trx.rollback();
           e.printStackTrace();
           throw new AdempiereException(e);
         } finally {
           m_trx.close();
-        	 System.out.println("FINISH");
+          System.out.println("FINISH");
         }
       }
     }
@@ -239,5 +245,36 @@ public class RedAssetTransfer extends AbstractEventHandler {
       IEventTopics.DOC_BEFORE_COMPLETE,
       X_RED_Asset_Transfer.Table_Name
     );
+  }
+
+  private void validateAssetTransfer(
+    Integer orgID,
+    Integer assetID,
+    Integer docTypeID
+  ) {
+    StringBuilder errorMessage = new StringBuilder(
+      "Please input the data in Column: "
+    );
+    StringBuilder err = new StringBuilder();
+    int num = 0;
+
+    if (orgID == null) {
+      num++;
+      err.append(num).append(". Transfer to Organization  ");
+    }
+
+    if (assetID == null) {
+      num++;
+      err.append(num).append(". Asset  ");
+    }
+
+    if (docTypeID == null) {
+      num++;
+      err.append(num).append(". Document Type  ");
+    }
+
+    if (err.length() > 0) {
+      throw new AdempiereException(errorMessage.toString() + err.toString());
+    }
   }
 }

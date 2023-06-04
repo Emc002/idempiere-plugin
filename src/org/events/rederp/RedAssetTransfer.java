@@ -51,7 +51,7 @@ public class RedAssetTransfer extends AbstractEventHandler {
           //Create New Asset from the Originial Asset
           MAsset newAsset = createNewAsset(originalAsset, now, m_trx);
           
-          //Disposal Original Asset before transfer into another Organization
+          //Copying Asset Balance and Disposal Original Asset before transfer into another Organization
           DisposeAssetResult resultDisposedAsset = disposeAsset(
             originalAsset,
             now,
@@ -324,7 +324,7 @@ public class RedAssetTransfer extends AbstractEventHandler {
           .first();
 
         if (assetExpense == null) {
-          // Handle the case where no asset expense record exists for the current period
+          // Handle the error
           continue;
         }
 

@@ -57,68 +57,18 @@ public class RedAssetTransfer extends AbstractEventHandler {
             now,
             m_trx
           );
-
           // Access the returned values
           MAssetDisposed assetDisposed = resultDisposedAsset.getAssetDisposed();
+          MDepreciationWorkfile assetBalanceOld = resultDisposedAsset.getAssetBalanceOld();
           Object[] row = resultDisposedAsset.getRow();
-          
+          int testing = assetBalanceOld.getA_Current_Period();
           int newAssetId = newAsset.get_ID();
-          int depreWorkFileIDOld = Integer.parseInt(row[0].toString());
+
           
           //Get Asset Balance from Original Asset before Disposed the Original Asset
-          MDepreciationWorkfile assetBalanceOld = new MDepreciationWorkfile(
-            Env.getCtx(),
-            depreWorkFileIDOld,
-            m_trx.getTrxName()
-          );
-          assetDisposed.saveEx();
 
           MAssetAddition assetAddition = createAssetAddition(newAsset, originalM_Product_ID,orgID, originalAsset.getM_Product_ID(), now, row, m_trx);
-          int A_Asset_ID = newAssetId;
-          MDepreciationWorkfile assetBlncQue = new Query(
-            Env.getCtx(),
-            MDepreciationWorkfile.Table_Name,
-            "a_asset_id = ?",
-            m_trx.getTrxName()
-          )
-            .setParameters(A_Asset_ID)
-            .first();
-          int currentPeriode = assetBalanceOld.getA_Current_Period();
-          for (int period = 1; period <= currentPeriode; period++) {
-            MDepreciationExp assetExpense = new Query(
-              Env.getCtx(),
-              MDepreciationExp.Table_Name,
-              "a_asset_id = ? AND a_period = ?",
-              m_trx.getTrxName()
-            )
-              .setParameters(A_Asset_ID, period)
-              .first();
-
-            if (assetExpense == null) {
-              // Handle the case where no asset expense record exists for the current period
-              continue;
-            }
-
-            BigDecimal assetCostExp = assetExpense.getA_Asset_Cost();
-            BigDecimal accuDepr = assetExpense.getA_Accumulated_Depr();
-            BigDecimal result = assetCostExp.subtract(accuDepr);
-
-            assetExpense.setProcessed(true);
-            assetExpense.setA_Asset_Remaining(result);
-            assetExpense.setA_Asset_Remaining_F(result);
-            assetExpense.saveEx();
-          }
-
-          int depreWorkFileIDOne = assetBlncQue.get_ID();
-          MDepreciationWorkfile assetBalanceUpdate = new MDepreciationWorkfile(
-            Env.getCtx(),
-            depreWorkFileIDOne,
-            m_trx.getTrxName()
-          );
-          int assetIDNew = assetBalanceUpdate.getA_Asset_ID();
-          PO.copyValues(assetBalanceOld, assetBalanceUpdate);
-          assetBalanceUpdate.setA_Asset_ID(assetIDNew);
-          assetBalanceUpdate.saveEx();
+          updateAssetBalanceAndExpense(newAssetId, assetBalanceOld, m_trx);
           m_trx.commit();
         } catch (Exception e) {
           m_trx.rollback();
@@ -207,16 +157,22 @@ public class RedAssetTransfer extends AbstractEventHandler {
 
   public class DisposeAssetResult {
     private MAssetDisposed assetDisposed;
+    private MDepreciationWorkfile assetBalanceOld;
     private Object[] row;
 
-    public DisposeAssetResult(MAssetDisposed assetDisposed, Object[] row) {
+    public DisposeAssetResult(MAssetDisposed assetDisposed,MDepreciationWorkfile assetBalanceOld, Object[] row) {
       this.assetDisposed = assetDisposed;
       this.row = row;
+      this.assetBalanceOld = assetBalanceOld;
     }
 
     public MAssetDisposed getAssetDisposed() {
       return assetDisposed;
     }
+    
+    public MDepreciationWorkfile getAssetBalanceOld() {
+        return assetBalanceOld;
+      }
 
     public Object[] getRow() {
       return row;
@@ -272,7 +228,12 @@ public class RedAssetTransfer extends AbstractEventHandler {
     } finally {
       DB.close(rs, pstmt);
     }
-
+    int depreWorkFileIDOld = Integer.parseInt(row[0].toString());
+    MDepreciationWorkfile assetBalanceOld = new MDepreciationWorkfile(
+            Env.getCtx(),
+            depreWorkFileIDOld,
+            m_trx.getTrxName()
+          );
     BigDecimal assetCostRemain = new BigDecimal(row[37].toString());
     BigDecimal accumulatedDepr = new BigDecimal(row[29].toString());
     BigDecimal expenseSL = new BigDecimal(row[45].toString());
@@ -297,9 +258,9 @@ public class RedAssetTransfer extends AbstractEventHandler {
     assetDisposed.saveEx();
     String statusAssetDispo = assetDisposed.completeIt();
     assetDisposed.setDocStatus(statusAssetDispo);
-//    assetDisposed.saveEx();
+    assetDisposed.saveEx();
 
-    return new DisposeAssetResult(assetDisposed, row);
+    return new DisposeAssetResult(assetDisposed, assetBalanceOld, row);
   }
   
   private MAssetAddition createAssetAddition(MAsset newAsset,  int originalM_Product_ID, int orgID, int productID, Timestamp now, Object[] row, Trx m_trx) {
@@ -340,4 +301,53 @@ public class RedAssetTransfer extends AbstractEventHandler {
       
       return assetAddition;
   }
+  
+  private void updateAssetBalanceAndExpense(int newAssetId, MDepreciationWorkfile assetBalanceOld, Trx m_trx) {
+      int A_Asset_ID = newAssetId;
+      MDepreciationWorkfile assetBlncQue = new Query(
+        Env.getCtx(),
+        MDepreciationWorkfile.Table_Name,
+        "a_asset_id = ?",
+        m_trx.getTrxName()
+      )
+        .setParameters(A_Asset_ID)
+        .first();
+      int currentPeriode = assetBalanceOld.getA_Current_Period();
+      for (int period = 1; period <= currentPeriode; period++) {
+        MDepreciationExp assetExpense = new Query(
+          Env.getCtx(),
+          MDepreciationExp.Table_Name,
+          "a_asset_id = ? AND a_period = ?",
+          m_trx.getTrxName()
+        )
+          .setParameters(A_Asset_ID, period)
+          .first();
+
+        if (assetExpense == null) {
+          // Handle the case where no asset expense record exists for the current period
+          continue;
+        }
+
+        BigDecimal assetCostExp = assetExpense.getA_Asset_Cost();
+        BigDecimal accuDepr = assetExpense.getA_Accumulated_Depr();
+        BigDecimal result = assetCostExp.subtract(accuDepr);
+
+        assetExpense.setProcessed(true);
+        assetExpense.setA_Asset_Remaining(result);
+        assetExpense.setA_Asset_Remaining_F(result);
+        assetExpense.saveEx();
+      }
+
+      int depreWorkFileIDOne = assetBlncQue.get_ID();
+      MDepreciationWorkfile assetBalanceUpdate = new MDepreciationWorkfile(
+        Env.getCtx(),
+        depreWorkFileIDOne,
+        m_trx.getTrxName()
+      );
+      int assetIDNew = assetBalanceUpdate.getA_Asset_ID();
+      PO.copyValues(assetBalanceOld, assetBalanceUpdate);
+      assetBalanceUpdate.setA_Asset_ID(assetIDNew);
+      assetBalanceUpdate.saveEx();
+	}
+
 }

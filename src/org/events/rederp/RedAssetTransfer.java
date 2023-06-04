@@ -39,115 +39,24 @@ public class RedAssetTransfer extends AbstractEventHandler {
           Integer docTypeID = (Integer) po.get_Value("C_DocType_ID");
           validateAssetTransfer(orgID, assetID, docTypeID);
           Timestamp now = new Timestamp(System.currentTimeMillis());
-          //          m_trx.start();
-
           MAsset originalAsset = new MAsset(
             Env.getCtx(),
             assetID,
             m_trx.getTrxName()
           );
-          String originalValue = originalAsset.getValue();
-          String originalName = originalAsset.getName();
-          String originalInventoryNo = originalAsset.getInventoryNo();
-          String originalDescription = originalAsset.getDescription();
-          MAssetGroup originalAssetGroup = originalAsset.getAssetGroup();
-          System.out.println(originalAssetGroup.get_ID());
+          
           int originalM_Product_ID = originalAsset.getM_Product_ID();
-          int originalManufacturedYear = originalAsset.getManufacturedYear();
-          Timestamp originalCreated = originalAsset.getCreated();
-          Timestamp originalAssetServiceDate = originalAsset.getAssetServiceDate();
-
-          int assetTODisposed = originalAsset.get_ID();
-          MAsset newAsset = new MAsset(Env.getCtx(), 0, m_trx.getTrxName());
-          newAsset.setName("TRF - " + originalName);
-          newAsset.setValue("TRF - " + originalName);
-          newAsset.setAD_Org_ID(12);
-          newAsset.setAssetActivationDate(now);
-          newAsset.setIsActive(true);
-          newAsset.setA_Asset_Status(MAsset.A_ASSET_STATUS_New);
-          newAsset.setValue(originalValue);
-          newAsset.setInventoryNo(originalInventoryNo);
-          newAsset.setDescription(originalDescription);
-          newAsset.setAssetGroup(originalAssetGroup);
-          newAsset.setM_Product_ID(originalM_Product_ID);
-          newAsset.setManufacturedYear(originalManufacturedYear);
-          newAsset.setA_Asset_CreateDate(originalCreated);
-          newAsset.setAssetServiceDate(originalAssetServiceDate);
-          MAssetDisposed assetDisposed = new MAssetDisposed(
-            Env.getCtx(),
-            0,
-            m_trx.getTrxName()
-          );
-          assetDisposed.setC_DocType_ID(200003);
-          assetDisposed.setA_Asset_ID(assetTODisposed);
-          assetDisposed.setA_Disposed_Method(
-            X_A_Asset_Disposed.A_DISPOSED_METHOD_Trade
-          );
-          newAsset.saveEx();
+          MAsset newAsset = createNewAsset(originalAsset, now, m_trx);
+          MAssetDisposed assetDisposed = disposeAsset(originalAsset, now, m_trx);
           int newAssetId = newAsset.get_ID();
-          int originalAssetID = originalAsset.get_ID();
-          String sql =
-            "SELECT *,\n" +
-            "  (CASE\n" +
-            "    WHEN UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1 > 0\n" +
-            "    THEN (A_Asset_Cost - A_Accumulated_Depr_F) / (UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1)\n" +
-            "    ELSE 0\n" +
-            "  END) AS a_expense_sl_f\n" +
-            "FROM A_Depreciation_Workfile\n" +
-            "WHERE A_Asset_ID = ?";
-          PreparedStatement pstmt = null;
-          ResultSet rs = null;
-          Object[] row = null;
-          ResultSetMetaData metaData = null;
-          try {
-            pstmt = DB.prepareStatement(sql, null);
-            pstmt.setInt(1, originalAssetID);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-              metaData = rs.getMetaData();
-              int columnCount = metaData.getColumnCount();
-              row = new Object[columnCount];
-              for (int i = 1; i <= columnCount; i++) {
-                row[i - 1] = rs.getObject(i);
-              }
-            }
-          } catch (SQLException e) {
-            e.printStackTrace();
-          } finally {
-            DB.close(rs, pstmt);
-          }
+        
           int depreWorkFileIDOld = Integer.parseInt(row[0].toString());
           MDepreciationWorkfile assetBalanceOld = new MDepreciationWorkfile(
             Env.getCtx(),
             depreWorkFileIDOld,
             m_trx.getTrxName()
           );
-          BigDecimal assetCostRemain = new BigDecimal(row[37].toString());
-          BigDecimal accumulatedDepr = new BigDecimal(row[29].toString());
-          BigDecimal expenseSL = new BigDecimal(row[45].toString());
-          BigDecimal currentPeriod = new BigDecimal(row[27].toString());
-          BigDecimal expense = assetCostRemain.subtract(expenseSL);
-          int currentPeriodInt = currentPeriod.intValue();
-          currentPeriodInt = currentPeriodInt - 1;
-          Calendar calendar = Calendar.getInstance();
-          calendar.setTime(now);
-          calendar.add(Calendar.MONTH, currentPeriodInt);
-          Timestamp newDate = new Timestamp(calendar.getTimeInMillis());
-          assetDisposed.setDateAcct(newDate);
-          assetDisposed.setDateDoc(newDate);
-          assetDisposed.setA_Disposed_Date(newDate);
-          assetDisposed.setA_Asset_Status("AC");
-          assetDisposed.setIsDisposed(false);
-          assetDisposed.setA_Accumulated_Depr(accumulatedDepr);
-          assetDisposed.setA_Accumulated_Depr_Delta(expenseSL);
-          assetDisposed.setA_Disposal_Amt(assetCostRemain);
-          assetDisposed.setExpense(expense);
-          assetDisposed.setPostingType("A");
-          assetDisposed.saveEx();
-          String statusAssetDispo = assetDisposed.completeIt();
-          assetDisposed.setDocStatus(statusAssetDispo);
-          assetDisposed.saveEx();
+        
           BigDecimal assetCost = new BigDecimal(row[4].toString());
           BigDecimal currentQtyDecimal = new BigDecimal(row[17].toString());
           BigDecimal salvageValueDecimal;
@@ -276,5 +185,111 @@ public class RedAssetTransfer extends AbstractEventHandler {
     if (err.length() > 0) {
       throw new AdempiereException(errorMessage.toString() + err.toString());
     }
+  }
+  
+  private MAsset createNewAsset(MAsset originalAsset, Timestamp now, Trx m_trx) {
+      String originalValue = originalAsset.getValue();
+      String originalName = originalAsset.getName();
+      String originalInventoryNo = originalAsset.getInventoryNo();
+      String originalDescription = originalAsset.getDescription();
+      MAssetGroup originalAssetGroup = originalAsset.getAssetGroup();
+      int originalM_Product_ID = originalAsset.getM_Product_ID();
+      int originalManufacturedYear = originalAsset.getManufacturedYear();
+      Timestamp originalCreated = originalAsset.getCreated();
+      Timestamp originalAssetServiceDate = originalAsset.getAssetServiceDate();
+      MAsset newAsset = new MAsset(Env.getCtx(), 0, m_trx.getTrxName());
+      newAsset.setName("TRF - " + originalName);
+      newAsset.setValue("TRF - " + originalName);
+      newAsset.setAD_Org_ID(12);
+      newAsset.setAssetActivationDate(now);
+      newAsset.setIsActive(true);
+      newAsset.setA_Asset_Status(MAsset.A_ASSET_STATUS_New);
+      newAsset.setValue(originalValue);
+      newAsset.setInventoryNo(originalInventoryNo);
+      newAsset.setDescription(originalDescription);
+      newAsset.setAssetGroup(originalAssetGroup);
+      newAsset.setM_Product_ID(originalM_Product_ID);
+      newAsset.setManufacturedYear(originalManufacturedYear);
+      newAsset.setA_Asset_CreateDate(originalCreated);
+      newAsset.setAssetServiceDate(originalAssetServiceDate);
+      newAsset.saveEx();
+
+      return newAsset;
+  }
+  
+  private MAssetDisposed disposeAsset(MAsset originalAsset, Timestamp now, Trx  m_trx) {
+	  MAssetDisposed assetDisposed = new MAssetDisposed(
+	            Env.getCtx(),
+	            0,
+	            m_trx.getTrxName()
+	          );
+	  		int assetTODisposed = originalAsset.get_ID();
+	          assetDisposed.setC_DocType_ID(200003);
+	          assetDisposed.setA_Asset_ID(assetTODisposed);
+	          assetDisposed.setA_Disposed_Method(
+	            X_A_Asset_Disposed.A_DISPOSED_METHOD_Trade
+	          );
+
+	          
+	          int originalAssetID = originalAsset.get_ID();
+	          String sql =
+	            "SELECT *,\n" +
+	            "  (CASE\n" +
+	            "    WHEN UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1 > 0\n" +
+	            "    THEN (A_Asset_Cost - A_Accumulated_Depr_F) / (UseLifeMonths_F - (CASE WHEN A_Current_Period = 0 THEN 1 ELSE A_Current_Period END) + 1)\n" +
+	            "    ELSE 0\n" +
+	            "  END) AS a_expense_sl_f\n" +
+	            "FROM A_Depreciation_Workfile\n" +
+	            "WHERE A_Asset_ID = ?";
+	          PreparedStatement pstmt = null;
+	          ResultSet rs = null;
+	          Object[] row = null;
+	          ResultSetMetaData metaData = null;
+	          try {
+	            pstmt = DB.prepareStatement(sql, null);
+	            pstmt.setInt(1, originalAssetID);
+	            rs = pstmt.executeQuery();
+
+	            if (rs.next()) {
+	              metaData = rs.getMetaData();
+	              int columnCount = metaData.getColumnCount();
+	              row = new Object[columnCount];
+	              for (int i = 1; i <= columnCount; i++) {
+	                row[i - 1] = rs.getObject(i);
+	              }
+	            }
+	          } catch (SQLException e) {
+	            e.printStackTrace();
+	          } finally {
+	            DB.close(rs, pstmt);
+	          }
+	          
+	          BigDecimal assetCostRemain = new BigDecimal(row[37].toString());
+	          BigDecimal accumulatedDepr = new BigDecimal(row[29].toString());
+	          BigDecimal expenseSL = new BigDecimal(row[45].toString());
+	          BigDecimal currentPeriod = new BigDecimal(row[27].toString());
+	          BigDecimal expense = assetCostRemain.subtract(expenseSL);
+	          int currentPeriodInt = currentPeriod.intValue();
+	          currentPeriodInt = currentPeriodInt - 1;
+	          Calendar calendar = Calendar.getInstance();
+	          calendar.setTime(now);
+	          calendar.add(Calendar.MONTH, currentPeriodInt);
+	          Timestamp newDate = new Timestamp(calendar.getTimeInMillis());
+	          assetDisposed.setDateAcct(newDate);
+	          assetDisposed.setDateDoc(newDate);
+	          assetDisposed.setA_Disposed_Date(newDate);
+	          assetDisposed.setA_Asset_Status("AC");
+	          assetDisposed.setIsDisposed(false);
+	          assetDisposed.setA_Accumulated_Depr(accumulatedDepr);
+	          assetDisposed.setA_Accumulated_Depr_Delta(expenseSL);
+	          assetDisposed.setA_Disposal_Amt(assetCostRemain);
+	          assetDisposed.setExpense(expense);
+	          assetDisposed.setPostingType("A");
+	          assetDisposed.saveEx();
+	          String statusAssetDispo = assetDisposed.completeIt();
+	          assetDisposed.setDocStatus(statusAssetDispo);
+	          assetDisposed.saveEx();
+      
+      return assetDisposed;
   }
 }
